@@ -1,16 +1,15 @@
 #include "Console.h"
+#include <algorithm>
 
 using std::vector;
 using std::string;
 
-Console::Console(string title, int width, int height) 
-    : width(width), height(height), cursor_x(0), cursor_y(0),
-      font_size_x(12), font_size_y(12), cursor_shown(true),
-      default_fg(COLOR_WHITE), default_bg(COLOR_BLACK)
+Console::Console(string title, int x, int y, int w, int h) 
+    : size{ w, h }, font_size_full{ 12, 12 }
 {
     try {
         sdl = SDL_Init(SDL_INIT_VIDEO);
-        win = SDL_CreateWindow(title.c_str(), 100, 100, width * font_size_x, height * font_size_y, SDL_WINDOW_SHOWN);
+        win = SDL_CreateWindow(title.c_str(), x, y, size.w * font_size_full.w / 2, size.h * font_size_full.h, SDL_WINDOW_SHOWN);
         if(win == nullptr) {
             sdl.log_error(std::cerr, "Window Creation");
         }
@@ -22,12 +21,9 @@ Console::Console(string title, int width, int height)
 
         SDL_RenderClear(ren);
         SDL_RenderPresent(ren);
-        load_font("terminal_12x12.png", font_size_x, font_size_y);
+        load_font("terminal_12x12.png", "terminal_6x12.png", font_size_full.w, font_size_full.h);
 
         init_color_map(colors);
-        Cell cell = { .ch = ' ', .fg = COLOR_WHITE, .bg = COLOR_BLACK };
-        back_buffer = vector< vector < Cell > >(height, vector< Cell >(width, cell));
-        display_buffer = back_buffer;
     } catch(InitError& err) {
         sdl.log_error(std::cerr, "SDL Initialization");
         throw;
@@ -38,139 +34,137 @@ Console::~Console()
 {
     SDL_DestroyWindow(win);
     SDL_DestroyRenderer(ren);
-    SDL_DestroyTexture(font);
+    SDL_DestroyTexture(font_full);
+    SDL_DestroyTexture(font_half);
 } // ~Console()
 
-int Console::get_width() const
+void Console::add_layer(Layer* layer)
 {
-    return width;
-} // get_width()
-
-int Console::get_height() const
-{
-    return height;
-} // get_height()
-
-Console& Console::move(int x, int y)
-{
-    cursor_x = x;
-    cursor_y = y;
-    return *this;
-} // move()
-
-Console& Console::put_char(char c)
-{
-    return put_char(c, default_fg, default_bg);
-} // put_char()
-
-Console& Console::put_char(char c, Color fg, Color bg)
-{
-    back_buffer[cursor_y][cursor_x].ch = c;
-    back_buffer[cursor_y][cursor_x].fg = fg;
-    back_buffer[cursor_y][cursor_x].bg = bg;
-    if(cursor_x < width - 1) {
-        cursor_x++;
-    } else {
-        cursor_x = 0;
-        if(cursor_y < height - 1) 
-            cursor_y++;
-        else 
-            cursor_y = 0;
+    if(layer) {
+        layers.push_back(layer);
+        layer->parent = this;
     }
-    return *this;
-} // put_char()
+} // add_layer()
 
-Console& Console::put_str(string str)
+void Console::remove_layer(Layer* layer)
 {
-    return put_str(str, default_fg, default_bg);
-} // put_str()
-
-Console& Console::put_str(std::string str, Color fg, Color bg)
-{
-    int len = str.length();
-    for(int i = 0; i < len && cursor_x + i < width; i++) {
-        put_char(str[i], fg, bg);
+    if(layer) {
+        auto it = find(layers.begin(), layers.end(), layer);
+        if(it != layers.end())
+            layers.erase(it);
+        layer->parent = nullptr;
     }
-    return *this;
-} // put_str()
+} // remove_layer()
 
-Console& Console::clear()
+void Console::bring_layer_to_front(Layer* layer)
 {
-    Cell cleared = { .ch = ' ', .fg = default_fg, .bg = default_bg };
-    for(int i = 0; i < height; i++)
-        for(int j = 0; j < width; j++)
-            back_buffer[i][j] = cleared;
-    return *this;
-} // clear()
+    remove_layer(layer);
+    add_layer(layer);
+} // bring_layer_to_front()
 
-Console& Console::flush()
+void Console::send_layer_to_back(Layer* layer)
 {
-    SDL_Rect src, dst;
-    src.w = dst.w = font_size_x;
-    src.h = dst.h = font_size_y;
-
-    for(int i = 0; i < height; i++) {
-        for(int j = 0; j < width; j++) {
-            Cell cell = back_buffer[i][j];
-            int font_y = (int)cell.ch / FONTMAP_NUM_Y;
-            int font_x = (int)cell.ch % FONTMAP_NUM_X;
-            src.x = font_size_x * font_x;
-            src.y = font_size_y * font_y;
-            dst.x = font_size_x * j;
-            dst.y = font_size_y * i;
-            RGB fg = get_color_rgb(cell.fg);
-            RGB bg = get_color_rgb(cell.bg);
-            SDL_SetRenderDrawColor(ren, bg.r, bg.g, bg.b, 255);
-            SDL_RenderFillRect(ren, &dst);
-            SDL_SetTextureColorMod(font, fg.r, fg.g, fg.b);
-            SDL_RenderCopy(ren, font, &src, &dst);
+    if(layer) {
+        auto it = find(layers.begin(), layers.end(), layer);
+        if(it != layers.end()) {
+            layers.erase(it);
+            layers.insert(layers.begin(), layer);
         }
     }
-    if(cursor_shown) {
-        Cell cell = back_buffer[cursor_y][cursor_x];
-        int font_y = (int)cell.ch / FONTMAP_NUM_Y;
-        int font_x = (int)cell.ch % FONTMAP_NUM_X;
-        src.x = font_size_x * font_x;
-        src.y = font_size_y * font_y;
-        dst.x = font_size_x * cursor_x;
-        dst.y = font_size_y * cursor_y;
-        SDL_SetRenderDrawColor(ren, 127, 127, 127, 255);
-        SDL_RenderFillRect(ren, &dst);
-        RGB fg = get_color_rgb(cell.fg);
-        SDL_SetTextureColorMod(font, fg.r, fg.g, fg.b);
-        SDL_RenderCopy(ren, font, &src, &dst);
+} // send_layer_to_back()
+
+void Console::remove_all_layers()
+{
+    for(auto it = layers.begin(); it != layers.end(); it++) 
+        (*it)->parent = nullptr;
+    layers.clear();
+} // remove_all_layers()
+
+Size Console::get_size() const
+{
+    return size;
+} // get_size()
+
+void Console::clear()
+{
+    for(auto it = layers.begin(); it != layers.end(); it++) {
+        (*it)->clear();
+    }
+} // clear()
+
+void Console::refresh()
+{
+    SDL_Rect src, dst;
+    src.h = dst.h = font_size_full.h;
+
+    for(auto it = layers.begin(); it != layers.end(); it++) {
+        Layer* layer = *it;
+        Rect bounds = layer->bounds;
+        Layer::Width width = layer->cell_width();
+        SDL_Texture* font;
+        if(width == Layer::HalfWidth) {
+            src.w = dst.w = font_size_full.w / 2;
+            font = font_half;
+        } else {
+            src.w = dst.w = font_size_full.w;
+            font = font_full;
+        }
+        for(int i = 0; i < bounds.h; i++) {
+            for(int j = 0; j < bounds.w; j++) {
+                Layer::Cell cell = layer->backbuffer[i][j];
+                int font_y = (int)cell.ch / FONTMAP_NUM_Y;
+                int font_x = (int)cell.ch % FONTMAP_NUM_X;
+                src.x = src.w * font_x;
+                src.y = src.h * font_y;
+                dst.x = bounds.x * font_size_full.w / 2 + src.w * j;
+                dst.y = bounds.y * font_size_full.h + src.h * i;
+                RGB fg = get_color_rgb(cell.fg);
+                RGB bg = get_color_rgb(cell.bg);
+                SDL_SetRenderDrawColor(ren, bg.r, bg.g, bg.b, 255);
+                SDL_RenderFillRect(ren, &dst);
+                SDL_SetTextureColorMod(font, fg.r, fg.g, fg.b);
+                SDL_RenderCopy(ren, font, &src, &dst);
+            }
+        }
+        layer->frontbuffer = layer->backbuffer;
     }
 
     SDL_RenderPresent(ren);
     SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
     SDL_RenderClear(ren);
 
-    display_buffer = back_buffer;
+} // refresh()
 
-    return *this;
-} // flush()
-
-void Console::load_font(string filename, int size_x, int size_y)
+void Console::load_font(std::string fname_full_width, 
+                         std::string fname_half_width, 
+                         int size_x, int size_y)
 {
-    SDL_Surface* surf = IMG_Load(filename.c_str());
+    SDL_Surface* surf = IMG_Load(fname_full_width.c_str());
     if(surf == nullptr) {
-        sdl.log_error(std::cerr, "Font Loading");
+        sdl.log_error(std::cerr, "Font (Full-Width) Loading");
     }
     Uint32 key = SDL_MapRGB(surf->format, 0, 0, 0);
     SDL_SetColorKey(surf, SDL_TRUE, key);
-    font = SDL_CreateTextureFromSurface(ren, surf);
-    if(font == nullptr) {
-        sdl.log_error(std::cerr, "Font Loading");
+    font_full = SDL_CreateTextureFromSurface(ren, surf);
+    SDL_FreeSurface(surf);
+    if(font_full == nullptr) {
+        sdl.log_error(std::cerr, "Font (Full-Width) Loading");
     }
-    font_size_x = size_x;
-    font_size_y = size_y;
-    SDL_SetWindowSize(win, width * font_size_x, height * font_size_y);
-} // load_font()
+    surf = IMG_Load(fname_half_width.c_str());
+    if(surf == nullptr) {
+        sdl.log_error(std::cerr, "Font (Half-Width) Loading");
+    }
+    key = SDL_MapRGB(surf->format, 0, 0, 0);
+    SDL_SetColorKey(surf, SDL_TRUE, key);
+    font_half = SDL_CreateTextureFromSurface(ren, surf);
+    SDL_FreeSurface(surf);
+    if(font_full == nullptr) {
+        sdl.log_error(std::cerr, "Font (Half-Width) Loading");
+    }
 
-void Console::show_cursor(bool shown)
-{
-    cursor_shown = shown;
-} // show_cursor()
+    font_size_full.w = size_x;
+    font_size_full.w = size_y;
+} // load_font()
 
 void Console::init_color_map(ColorMap& colormap)
 {
@@ -184,17 +178,7 @@ void Console::init_color_map(ColorMap& colormap)
     colormap[COLOR_WHITE]   = { 255, 255, 255 };
 } // init_color_map()
 
-void Console::set_foreground(Color id)
-{
-    default_fg = id;
-} // set_foreground()
-
-void Console::set_background(Color id)
-{
-    default_bg = id;
-} // set_background()
-
-Console::RGB Console::get_color_rgb(Color color) const
+RGB Console::get_color_rgb(Color color) const
 {
     try {
         return colors.at(color);

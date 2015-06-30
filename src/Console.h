@@ -5,74 +5,84 @@
 #include <unordered_map>
 #include <string>
 #include "SDL.h"
+#include "Layer.h"
 
-typedef unsigned int Color;
-
-const Color COLOR_BLACK   = 0;
-const Color COLOR_BLUE    = 1;
-const Color COLOR_GREEN   = 2;
-const Color COLOR_CYAN    = 3;
-const Color COLOR_RED     = 4;
-const Color COLOR_MAGENTA = 5;
-const Color COLOR_YELLOW  = 6;
-const Color COLOR_WHITE   = 7;
 
 class Console 
 {
     public:
-        Console(std::string title, int width = 80, int height = 24); 
+    /*
+     * Console creation.
+     */
+        /*
+         * Construct and initialize a console window.
+         * @title: console window title.
+         * @x,y: coordinates (in pixels) of the window's top-left corner.
+         * @w,h: width and height (in half-width cells) of the window.
+         */
+        Console(std::string title = "", int x = 0, int y = 0, 
+                int w = 80, int h = 24); 
         ~Console();
 
-        void load_font(std::string filename, int size_x, int size_y);
-        void show_cursor(bool shown);
+    /*
+     * Layer stack operations. Changes will not be visible until the
+     * console is refreshed. Layers can be occluded by other Layers that
+     * are higher in the stack than them.
+     */
+        // Adds the Layer to the top of the stack.
+        void add_layer(Layer* layer);
+        //  Removes the Layer from where it is in the stack.
+        void remove_layer(Layer* layer);
+        // Moves the Layer to the top of the stack.
+        void bring_layer_to_front(Layer* layer);
+        // Moves the Layer to the bottom of the stack.
+        void send_layer_to_back(Layer* layer);
+        // Removes all Layers from the stack.
+        void remove_all_layers();
 
-        Console& move(int x, int y);
-        Console& put_char(char c);
-        Console& put_char(char c, Color fg, Color bg);
-        Console& put_str(std::string str);
-        Console& put_str(std::string str, Color fg, Color bg);
-        Console& clear();
-        Console& flush();
+    /*
+     * Console control operations.
+     */
+        // Clears all Layers in the stack to their default colors.
+        void clear();
+        // Renders all Layers in the stack.
+        void refresh();
 
-        int get_width() const;
-        int get_height() const;
-
-        void set_foreground(Color id);
-        void set_background(Color id);
+    /*
+     * Console settings operations.
+     */
+        // Returns the size of the Console.
+        Size get_size() const;
+        /*
+         * Defines a color for the Console.
+         * @id: id to associate with the color.
+         * @r,g,b: rgb content of the color.
+         */
         void define_color(Color id, int r, int g, int b);
 
     private:
         const int FONTMAP_NUM_X = 16;
         const int FONTMAP_NUM_Y = 16;
 
-        struct RGB { 
-            int r, g, b; 
-        };
         typedef std::unordered_map< Color, RGB > ColorMap;
         ColorMap colors;
 
-        struct Cell {
-            char ch;
-            Color fg, bg;
-        };
-        typedef std::vector< std::vector< Cell > > Buffer;
-        Buffer display_buffer;
-        Buffer back_buffer;
+        Size size, font_size_full;
 
-        int width, height;
-        int cursor_x, cursor_y;
-        int font_size_x, font_size_y;
-        bool cursor_shown;
 
-        Color default_fg, default_bg;
+        std::vector< Layer* > layers;
 
         SDL sdl;
         SDL_Window* win;
         SDL_Renderer* ren;
-        SDL_Texture* font;
+        SDL_Texture* font_full;
+        SDL_Texture* font_half;
 
         void init_color_map(ColorMap& colormap);
         RGB get_color_rgb(Color color) const;
+        void load_font(std::string fname_full_width, 
+                       std::string fname_half_width, 
+                       int size_x, int size_y);
 };
 
 #endif
