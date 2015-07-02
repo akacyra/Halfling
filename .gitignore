@@ -2,3 +2,5 @@
 /obj
 Main.cpp
 Makefile
+*.in
+*.log

@@ -8,6 +8,15 @@ Halfling is a library that lets you build  text-based user interfaces using two 
     - Can mix full-width and half-width fonts
     - Powered by SDL
 
+### Installation
+
+```
+./autogen.sh
+./configure
+make
+make install
+```
+
 ### Example
 
 ```
