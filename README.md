@@ -4,24 +4,32 @@ Halfling is a library that lets you build  text-based user interfaces using two 
 
 ### Features
 
-    - Stackable Layers than can be added or removed as needed
-    - Can mix full-width and half-width fonts
-    - Powered by SDL
+- Stackable Layers than can be added or removed as needed
+- Can mix full-width and half-width fonts
+- Powered by SDL
 
 ### Installation
 
-```
+```Shell
 ./autogen.sh
 ./configure
 make
 make install
 ```
 
+To compile examples:
+```Shell
+cd examples
+make 
+```
+
 ### Example
 
-```
+```C++
 #include <halfling/Console.h>
+
 ...
+
 Console con("Example", 0, 0, 80, 24);
 Layer screen(Layer::HalfWidth, 0, 0, 80, 24);
 con.add_layer(&screen);

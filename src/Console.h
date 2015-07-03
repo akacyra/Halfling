@@ -6,6 +6,7 @@
 #include <string>
 #include "SDL.h"
 #include "Layer.h"
+#include "Fontmap.h"
 
 
 class Console 
@@ -59,30 +60,32 @@ class Console
          * @r,g,b: rgb content of the color.
          */
         void define_color(Color id, int r, int g, int b);
+        /*
+         * Loads a custom font from an image file into the Console.
+         * @fname: image file that contains the font.
+         * @font_width: the font that is being set.
+         * @num_horiz: number of horizontal glyphs in the font image.
+         * @num_vert: number of vertical glyphs in the font image.
+         */
+        void set_custom_font(std::string fname, Layer::Width font_width,
+                             int num_horiz, int num_vert);
 
     private:
-        const int FONTMAP_NUM_X = 16;
-        const int FONTMAP_NUM_Y = 16;
+        Fontmap half_width, full_width;
 
         typedef std::unordered_map< Color, RGB > ColorMap;
         ColorMap colors;
 
-        Size size, font_size_full;
-
+        Size size;
 
         std::vector< Layer* > layers;
 
         SDL sdl;
         SDL_Window* win;
         SDL_Renderer* ren;
-        SDL_Texture* font_full;
-        SDL_Texture* font_half;
 
         void init_color_map(ColorMap& colormap);
         RGB get_color_rgb(Color color) const;
-        void load_font(std::string fname_full_width, 
-                       std::string fname_half_width, 
-                       int size_x, int size_y);
 };
 
 #endif

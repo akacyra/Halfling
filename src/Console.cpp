@@ -5,11 +5,11 @@ using std::vector;
 using std::string;
 
 Console::Console(string title, int x, int y, int w, int h) 
-    : size{ w, h }, font_size_full{ 12, 12 }
+    : size{ w, h }
 {
     try {
         sdl = SDL_Init(SDL_INIT_VIDEO);
-        win = SDL_CreateWindow(title.c_str(), x, y, size.w * font_size_full.w / 2, size.h * font_size_full.h, SDL_WINDOW_SHOWN);
+        win = SDL_CreateWindow(title.c_str(), x, y, 0, 0, SDL_WINDOW_SHOWN);
         if(win == nullptr) {
             sdl.log_error(std::cerr, "Window Creation");
         }
@@ -17,13 +17,24 @@ Console::Console(string title, int x, int y, int w, int h)
         if(ren == nullptr) {
             sdl.log_error(std::cerr, "Renderer Creation");
         }
-        SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
 
-        SDL_RenderClear(ren);
-        SDL_RenderPresent(ren);
-        load_font("terminal_12x12.png", "terminal_6x12.png", font_size_full.w, font_size_full.h);
+        full_width.load(ren, "terminal_12x12.png", 16, 16);
+        half_width.load(ren, "terminal_6x12.png", 16, 16);
+
+        if(full_width.is_valid() && half_width.is_valid()) {
+            int win_w = half_width.get_glyph_size().w * w;
+            int win_h = half_width.get_glyph_size().h * h;
+            SDL_SetWindowSize(win, win_w, win_h);
+        } else {
+            std::cout << "Font loading error." << std::endl;
+        }
 
         init_color_map(colors);
+
+        SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
+        SDL_RenderClear(ren);
+        SDL_RenderPresent(ren);
+
     } catch(InitError& err) {
         sdl.log_error(std::cerr, "SDL Initialization");
         throw;
@@ -34,8 +45,6 @@ Console::~Console()
 {
     SDL_DestroyWindow(win);
     SDL_DestroyRenderer(ren);
-    SDL_DestroyTexture(font_full);
-    SDL_DestroyTexture(font_half);
 } // ~Console()
 
 void Console::add_layer(Layer* layer)
@@ -95,35 +104,38 @@ void Console::clear()
 void Console::refresh()
 {
     SDL_Rect src, dst;
-    src.h = dst.h = font_size_full.h;
+    int full_width_w = full_width.get_glyph_size().w;
+    int full_width_h = full_width.get_glyph_size().h;
+    int half_width_w = half_width.get_glyph_size().w;
+    int half_width_h = half_width.get_glyph_size().h;
+    src.h = dst.h = full_width_h;
 
     for(auto it = layers.begin(); it != layers.end(); it++) {
         Layer* layer = *it;
         Rect bounds = layer->bounds;
         Layer::Width width = layer->cell_width();
-        SDL_Texture* font;
+        Fontmap* fontmap;
         if(width == Layer::HalfWidth) {
-            src.w = dst.w = font_size_full.w / 2;
-            font = font_half;
+            src.w = dst.w = half_width_w;
+            fontmap = &half_width;
         } else {
-            src.w = dst.w = font_size_full.w;
-            font = font_full;
+            src.w = dst.w = full_width_w;
+            fontmap = &full_width;
         }
+        SDL_Texture* font_tex = fontmap->get_font_texture();
         for(int i = 0; i < bounds.h; i++) {
             for(int j = 0; j < bounds.w; j++) {
                 Layer::Cell cell = layer->backbuffer[i][j];
-                int font_y = (int)cell.ch / FONTMAP_NUM_Y;
-                int font_x = (int)cell.ch % FONTMAP_NUM_X;
-                src.x = src.w * font_x;
-                src.y = src.h * font_y;
-                dst.x = bounds.x * font_size_full.w / 2 + src.w * j;
-                dst.y = bounds.y * font_size_full.h + src.h * i;
+                Rect r = (*fontmap)[(unsigned char)cell.ch];
+                src = { .x = r.x, .y = r.y, .w = r.w, .h = r.h };
+                dst.x = bounds.x * half_width_w + src.w * j;
+                dst.y = bounds.y * half_width_h + src.h * i;
                 RGB fg = get_color_rgb(cell.fg);
                 RGB bg = get_color_rgb(cell.bg);
                 SDL_SetRenderDrawColor(ren, bg.r, bg.g, bg.b, 255);
                 SDL_RenderFillRect(ren, &dst);
-                SDL_SetTextureColorMod(font, fg.r, fg.g, fg.b);
-                SDL_RenderCopy(ren, font, &src, &dst);
+                SDL_SetTextureColorMod(font_tex, fg.r, fg.g, fg.b);
+                SDL_RenderCopy(ren, font_tex, &src, &dst);
             }
         }
         layer->frontbuffer = layer->backbuffer;
@@ -135,36 +147,10 @@ void Console::refresh()
 
 } // refresh()
 
-void Console::load_font(std::string fname_full_width, 
-                         std::string fname_half_width, 
-                         int size_x, int size_y)
+void Console::set_custom_font(string fname, Layer::Width font_width, 
+                              int num_horiz, int num_vert)
 {
-    SDL_Surface* surf = IMG_Load(fname_full_width.c_str());
-    if(surf == nullptr) {
-        sdl.log_error(std::cerr, "Font (Full-Width) Loading");
-    }
-    Uint32 key = SDL_MapRGB(surf->format, 0, 0, 0);
-    SDL_SetColorKey(surf, SDL_TRUE, key);
-    font_full = SDL_CreateTextureFromSurface(ren, surf);
-    SDL_FreeSurface(surf);
-    if(font_full == nullptr) {
-        sdl.log_error(std::cerr, "Font (Full-Width) Loading");
-    }
-    surf = IMG_Load(fname_half_width.c_str());
-    if(surf == nullptr) {
-        sdl.log_error(std::cerr, "Font (Half-Width) Loading");
-    }
-    key = SDL_MapRGB(surf->format, 0, 0, 0);
-    SDL_SetColorKey(surf, SDL_TRUE, key);
-    font_half = SDL_CreateTextureFromSurface(ren, surf);
-    SDL_FreeSurface(surf);
-    if(font_full == nullptr) {
-        sdl.log_error(std::cerr, "Font (Half-Width) Loading");
-    }
-
-    font_size_full.w = size_x;
-    font_size_full.w = size_y;
-} // load_font()
+} // set_custom_font()
 
 void Console::init_color_map(ColorMap& colormap)
 {

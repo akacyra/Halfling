@@ -20,5 +20,5 @@ AC_CHECK_LIB([SDL2], [SDL_Init])
 
 # Checks for library functions.
 
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile examples/Makefile])
 AC_OUTPUT
