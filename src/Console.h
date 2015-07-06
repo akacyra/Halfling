@@ -1,5 +1,5 @@
 #ifndef __CONSOLE_H__
-#define __CONSOLE_H_
+#define __CONSOLE_H__
 
 #include <vector>
 #include <unordered_map>
