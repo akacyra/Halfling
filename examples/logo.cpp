@@ -17,5 +17,6 @@ int main(void)
     rogue.put_char(3, 4, '+', COLOR_YELLOW, COLOR_BLACK);
     text.put_str(0, 0, "--[Halfling]--");
     con.refresh();
-    while(true);
+    SDL_Delay(3000);
+    return 0;
 } // main()

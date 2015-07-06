@@ -67,6 +67,10 @@ class Layer
         Color get_fg_color() const;
         // Returns the default background color id.
         Color get_bg_color() const;
+        // Sets the origin (top-left corner) of the Layer.
+        void set_origin(int x, int y);
+        // Returns the bounds of the Layer.
+        Rect get_bounds() const;
 
     private:
         Console* parent;

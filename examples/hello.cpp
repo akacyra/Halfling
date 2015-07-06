@@ -7,5 +7,6 @@ int main(void)
     con.add_layer(&screen);
     screen.put_str(40, 12, "Hello, world!");
     con.refresh();
-    while(true);
+    SDL_Delay(3000);
+    return 0;
 } // main()

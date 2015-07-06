@@ -86,3 +86,14 @@ Color Layer::get_bg_color() const
 {
     return default_bg;
 } // get_bg_color()
+
+void Layer::set_origin(int x, int y)
+{
+    bounds.x = x;
+    bounds.y = y;
+} // set_origin()
+
+Rect Layer::get_bounds() const
+{
+    return bounds;
+} // get_bounds()
