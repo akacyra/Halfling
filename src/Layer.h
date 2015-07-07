@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <boost/optional.hpp>
 #include "Util.h"
 #include "Color.h"
 
@@ -23,17 +24,22 @@ class Layer
             FullWidth
         };
 
+        struct Cell {
+            char ch;
+            Color fg, bg;
+        };
+
     /* 
      * Layer creation.
      */
         /*
          * Construct and initialize layer.
          * @cell_width: width of the font to use.
-         * @x,y: coordinates (in cells) of the top-left corner of the :ayer.
+         * @x,y: coordinates (in cells) of the top-left corner of the layer.
          * @w,h: width (in cells) of the Layer.
          *
          * The Console's coordinate system is based off the smallest unit,
-         *  half width cells. So (x,y) for Layers should always be in half-
+         *  half-width cells. So (x,y) for Layers should always be in half-
          *  width cells. (w,h) are in the Layers own cell width.
          */
         Layer(Width cell_width, int x, int y, int w, int h);
@@ -52,7 +58,7 @@ class Layer
         // Adds str to the Layer starting at position (x,y) width specified colors.
         void put_str(int x, int y, std::string str, Color fg, Color bg);
         // Returns the char, fg color, and bg color of the cell at position (x,y).
-        std::tuple< char, Color, Color > operator()(int x, int y) const;
+        boost::optional< Cell > operator()(int x, int y) const;
 
     /*
      * Layer settings operations.
@@ -75,14 +81,6 @@ class Layer
     private:
         Console* parent;
 
-        struct Cell {
-            char ch;
-            Color fg, bg;
-        };
-
-        const Cell& cell_at(int x, int y) const;
-        Cell& cell_at(int x, int y);
-
         typedef std::vector< std::vector < Cell > > Buffer;
         Buffer frontbuffer, backbuffer;
 
@@ -90,6 +88,8 @@ class Layer
         Width cell_w;
 
         Color default_fg, default_bg;
+
+        bool contains(int x, int y) const;
 };
 
 #endif

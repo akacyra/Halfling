@@ -1,21 +1,28 @@
 #include <halfling/Console.h>
 
-int main(void)
+int main()
 {
-    Console con("Halfling", 0, 0, 14, 6);
-    Layer rogue(Layer::FullWidth, 0, 0, 7, 5);
-    Layer text(Layer::HalfWidth, 0, 5, 14, 1);
-    con.add_layer(&rogue);
-    con.add_layer(&text);
-    rogue.put_str(0, 0, "##o.o##");
-    rogue.put_str(0, 1, "#.....#");
-    rogue.put_str(0, 2, "#o...o#");
-    rogue.put_str(0, 3, "#..@..#");
-    rogue.put_str(0, 4, "##o.o##");
-    rogue.put_char(3, 1, 'D', COLOR_RED, COLOR_BLACK);
-    rogue.put_char(3, 0, '+', COLOR_YELLOW, COLOR_BLACK);
-    rogue.put_char(3, 4, '+', COLOR_YELLOW, COLOR_BLACK);
-    text.put_str(0, 0, "--[Halfling]--");
+    Console con("", 0, 0, 2*8, 6);
+    Layer text_full(Layer::FullWidth, 0, 0, 8, 1);
+    Layer text_half(Layer::HalfWidth, 0, 1, 2*8, 1);
+    Layer symbol_full(Layer::FullWidth, 0, 2, 4, 4);
+    Layer symbol_half(Layer::HalfWidth, 2*4, 2, 4, 4);
+    con.add_layer(&text_full);
+    con.add_layer(&text_half);
+    con.add_layer(&symbol_full);
+    con.add_layer(&symbol_half);
+    text_full.put_str(0, 0, "H lfling", COLOR_RED, COLOR_BLACK);
+    text_full.put_char(1, 0, '@');
+    text_half.put_str(0, 0, "H lfling", COLOR_RED, COLOR_BLACK);
+    text_half.put_char(1, 0, '@');
+    symbol_full.put_str(0, 0, "\xc9\xcd\xcd\xbb");
+    symbol_full.put_str(0, 1, "\xba\xc9\xbb\xba");
+    symbol_full.put_str(0, 2, "\xba\xc8\xca\xbc");
+    symbol_full.put_str(0, 3, "\xc8\xcd\xcd\xb5");
+    symbol_half.put_str(0, 0, "\xc9\xcd\xcd\xbb");
+    symbol_half.put_str(0, 1, "\xba\xc9\xbb\xba");
+    symbol_half.put_str(0, 2, "\xba\xc8\xca\xbc");
+    symbol_half.put_str(0, 3, "\xc8\xcd\xcd\xb5");
     con.refresh();
     SDL_Delay(3000);
     return 0;

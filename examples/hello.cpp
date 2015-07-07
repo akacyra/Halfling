@@ -1,6 +1,6 @@
 #include <halfling/Console.h>
 
-int main(void)
+int main()
 {
     Console con("Hello", 0, 0, 80, 24);
     Layer screen(Layer::HalfWidth, 0, 0, 80, 24);

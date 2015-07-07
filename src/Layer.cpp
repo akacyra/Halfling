@@ -3,7 +3,8 @@
 
 using std::vector;
 using std::string;
-using std::tuple;
+using boost::optional;
+
 
 Layer::Layer(Width cell_width, int x, int y, int w, int h) 
     : parent(nullptr), bounds{ x, y, w, h }, cell_w(cell_width),
@@ -20,16 +21,6 @@ Layer::Width Layer::cell_width() const
     return cell_w;
 } // cell_width()
 
-const Layer::Cell& Layer::cell_at(int x, int y) const
-{
-    return backbuffer[y][x];
-} // cell_at()
-
-Layer::Cell& Layer::cell_at(int x, int y)
-{
-    return backbuffer[y][x];
-} // cell_at()
-
 void Layer::clear()
 {
     Cell cleared = { .ch = ' ', .fg = default_fg, .bg = default_bg };
@@ -45,7 +36,8 @@ void Layer::put_char(int x, int y, char ch)
 
 void Layer::put_char(int x, int y, char ch, Color fg, Color bg)
 {
-    backbuffer[y][x] = { .ch = ch, .fg = fg, .bg = bg };
+    if(contains(x, y))
+        backbuffer[y][x] = { .ch = ch, .fg = fg, .bg = bg };
 } // put_char()
 
 void Layer::put_str(int x, int y, string str)
@@ -61,10 +53,13 @@ void Layer::put_str(int x, int y, string str, Color fg, Color bg)
     }
 } // put_str()
 
-tuple< char, Color, Color > Layer::operator()(int x, int y) const
+optional< Layer::Cell > Layer::operator()(int x, int y) const
 {
-    Cell c = frontbuffer[y][x];
-    return tuple< char, Color, Color >(c.ch, c.fg, c.bg);
+    if(contains(x, y)) {
+        Cell c = frontbuffer[y][x];
+        return optional< Cell >(c);
+    }
+    return optional< Cell >();
 } // operator()()
 
 void Layer::set_fg_color(Color id)
@@ -97,3 +92,8 @@ Rect Layer::get_bounds() const
 {
     return bounds;
 } // get_bounds()
+
+bool Layer::contains(int x, int y) const
+{
+    return (x >= 0 && x <= bounds.w && y >= 0 && y <= bounds.h);
+} // contains()
