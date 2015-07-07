@@ -95,5 +95,5 @@ Rect Layer::get_bounds() const
 
 bool Layer::contains(int x, int y) const
 {
-    return (x >= 0 && x <= bounds.w && y >= 0 && y <= bounds.h);
+    return (x >= 0 && x < bounds.w && y >= 0 && y < bounds.h);
 } // contains()

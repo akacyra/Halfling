@@ -1,4 +1,4 @@
-AM_CXXFLAGS = -Wall -std=c++11 -g 
+AM_CXXFLAGS = -Wall -std=c++11
 AM_LDFLAGS = -lSDL2 lSDL2_image
 
 lib_LTLIBRARIES = libhalfling.la
