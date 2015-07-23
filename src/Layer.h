@@ -1,5 +1,5 @@
-#ifndef __LAYER_H__
-#define __LAYER_H__
+#ifndef __HALFLING_LAYER_H__
+#define __HALFLING_LAYER_H__
 
 #include <vector>
 #include <string>

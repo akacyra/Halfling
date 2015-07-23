@@ -1,5 +1,5 @@
-#ifndef __FONTMAP_H__
-#define __FONTMAP_H__
+#ifndef __HALFLING_FONTMAP_H__
+#define __HALFLING_FONTMAP_H__
 
 #include "SDL.h"
 #include "Util.h"

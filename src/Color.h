@@ -1,11 +1,11 @@
-#ifndef __COLOR_H_
-#define __COLOR_H_
+#ifndef __HALFLING_COLOR_H__
+#define __HALFLING_COLOR_H__
 
 struct RGB { 
     int r, g, b; 
 };
 
-typedef unsigned int Color;
+typedef unsigned Color;
 
 const Color COLOR_BLACK   = 0;
 const Color COLOR_BLUE    = 1;

@@ -1,5 +1,5 @@
-#ifndef __UTIL_H__
-#define __UTIL_H__
+#ifndef __HALFLING_UTIL_H__
+#define __HALFLING_UTIL_H__
 
 struct Point {
     int x, y;

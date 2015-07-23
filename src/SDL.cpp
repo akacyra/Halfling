@@ -34,3 +34,14 @@ void SDL::log_error(std::ostream& os, const string& msg)
 {
     os << msg << " error: " << SDL_GetError() << std::endl;
 } // log_error()
+
+char SDL::wait_for_key()
+{
+    while(true) {
+        SDL_Event e;
+        SDL_PollEvent(&e);
+        if(e.type == SDL_KEYDOWN) {
+            return e.key.keysym.sym;
+        }
+    }
+} // wait_for_key()
