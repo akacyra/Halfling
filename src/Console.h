@@ -87,6 +87,7 @@ class Console
         SDL sdl;
         SDL_Window* win;
         SDL_Renderer* ren;
+        SDL_Texture* target;
 
         void init_color_map(ColorMap& colormap);
         RGB get_color_rgb(Color color) const;

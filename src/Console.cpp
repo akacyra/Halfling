@@ -18,6 +18,7 @@ Console::Console(string title, int x, int y, int w, int h)
             sdl.log_error(std::cerr, "Renderer Creation");
         }
 
+
         full_width.load(ren, "terminal_12x12.png", 16, 16);
         half_width.load(ren, "terminal_6x12.png", 16, 16);
 
@@ -27,6 +28,14 @@ Console::Console(string title, int x, int y, int w, int h)
             SDL_SetWindowSize(win, win_w, win_h);
         } else {
             std::cout << "Font loading error." << std::endl;
+        }
+
+        int win_w, win_h;
+        SDL_GetWindowSize(win, &win_w, &win_h);
+        target = SDL_CreateTexture(ren, SDL_PIXELFORMAT_UNKNOWN,
+                SDL_TEXTUREACCESS_TARGET, win_w, win_h);
+        if(target == nullptr) {
+            sdl.log_error(std::cerr, "Target Texture Creation");
         }
 
         init_color_map(colors);
@@ -45,6 +54,7 @@ Console::~Console()
 {
     SDL_DestroyWindow(win);
     SDL_DestroyRenderer(ren);
+    SDL_DestroyTexture(target);
 } // ~Console()
 
 void Console::add_layer(Layer* layer)
@@ -122,6 +132,7 @@ void Console::copy_layer_contents(Layer* layer)
         fontmap = &full_width;
     }
     SDL_Texture* font_tex = fontmap->get_font_texture();
+    SDL_SetRenderTarget(ren, target);
     for(int i = 0; i < bounds.h; i++) {
         for(int j = 0; j < bounds.w; j++) {
             Layer::Cell cell = layer->backbuffer[i][j];
@@ -137,6 +148,7 @@ void Console::copy_layer_contents(Layer* layer)
             SDL_RenderCopy(ren, font_tex, &src, &dst);
         }
     }
+    SDL_SetRenderTarget(ren, NULL);
     layer->frontbuffer = layer->backbuffer;
 
 } // copy_layer_contents()
@@ -151,6 +163,7 @@ void Console::refresh()
 
 void Console::update()
 {
+    SDL_RenderCopy(ren, target, NULL, NULL);
     SDL_RenderPresent(ren);
     SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
     SDL_RenderClear(ren);

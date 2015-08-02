@@ -32,11 +32,25 @@ int main()
 
     Layer sub11(Layer::FullWidth, 1*2, 0, 3, 3);
     sub1.add_sublayer(&sub11);
-    border(sub11);
 
-    scr.touch();
-    con.update();
+    Layer sub2(Layer::FullWidth, 2, 6, 3, 3);
+    scr.add_sublayer(&sub2);
+    sub2.put_str(0, 0, "###");
+    sub2.put_str(0, 1, "###");
+    sub2.put_str(0, 2, "###");
 
-    SDL_Delay(5000);
+    Layer sub21(Layer::HalfWidth, 0, 1, 3*2, 1);
+    sub2.add_sublayer(&sub21);
+    sub21.put_str(0, 0, "foobar");
+
+    con.refresh();
+
+    for(int i = 0; i < 10; i++) {
+        Rect bounds = sub2.get_bounds();
+        sub2.set_origin(bounds.x + 1, bounds.y);
+        con.refresh();
+        SDL_Delay(250);
+    }
+
     return 0;
 } // main()

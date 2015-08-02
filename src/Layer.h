@@ -47,9 +47,10 @@ class Layer
     /*
      * Layer control operations.
      */
-        // Clears the Layer and its sublayers using default foreground 
-        // and background colors.
+        // Clears the Layer using default foreground and background colors
         void clear();
+        // Clears sublayers using default foreground and background colors
+        void clear_sublayers();
         // Copies the Layer and its sublayers to the Console backbuffer.
         void touch();
         // Adds ch to the Layer at position (x,y) using default colors.

@@ -28,9 +28,14 @@ void Layer::clear()
     for(int i = 0; i < bounds.h; i++)
         for(int j = 0; j < bounds.w; j++)
             backbuffer[i][j] = cleared;
+
+} // clear() 
+
+void Layer::clear_sublayers()
+{
     for(auto it = sublayers.begin(); it != sublayers.end(); it++) 
         (*it)->clear();
-} // clear() 
+} // clear_sublayers()
 
 void Layer::touch()
 {
@@ -170,6 +175,11 @@ void Layer::set_origin(int x, int y)
         new_abs.y += p->bounds.y;
     }
     abs_origin = new_abs;
+    for(auto it = sublayers.begin(); it != sublayers.end(); it++) {
+        Layer* l = *it;
+        l->abs_origin.x = abs_origin.x + l->bounds.x;
+        l->abs_origin.y = abs_origin.y + l->bounds.y;
+    }
 } // set_origin()
 
 Rect Layer::get_bounds() const
