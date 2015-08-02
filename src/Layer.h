@@ -47,18 +47,39 @@ class Layer
     /*
      * Layer control operations.
      */
-        // Clears the Layer using default foreground and background colors.
+        // Clears the Layer and its sublayers using default foreground 
+        // and background colors.
         void clear();
+        // Copies the Layer and its sublayers to the Console backbuffer.
+        void touch();
         // Adds ch to the Layer at position (x,y) using default colors.
         void put_char(int x, int y, char ch);
-        // Adds ch to the Layer at position (x,y) width specified colors.
+        // Adds ch to the Layer at position (x,y) with specified colors.
         void put_char(int x, int y, char ch, Color fg, Color bg);
         // Adds str to the Layer starting at position (x,y) using default colors.
         void put_str(int x, int y, std::string str);
-        // Adds str to the Layer starting at position (x,y) width specified colors.
+        // Adds str to the Layer starting at position (x,y) with specified colors.
         void put_str(int x, int y, std::string str, Color fg, Color bg);
         // Returns the char, fg color, and bg color of the cell at position (x,y).
         boost::optional< Cell > operator()(int x, int y) const;
+
+    /*
+     * Sublayer stack operations. Changes will not be visible until the
+     * layer is refreshed. Sublayers can be occluded by other Layers that
+     * are higher in the stack than them.
+     */
+        // Adds the sublayer to the top of the stack.
+        void add_sublayer(Layer* layer);
+        //  Removes the sublayer from where it is in the stack.
+        void remove_sublayer(Layer* layer);
+        // Removes all sublayers from the stack.
+        void remove_all_sublayers();
+
+        // Moves the layer to the top of its parent's layer stack.
+        void bring_to_front();
+        // Moves the layer to the bottom of its parent's layer stack.
+        void send_to_back();
+
 
     /*
      * Layer settings operations.
@@ -79,17 +100,23 @@ class Layer
         Rect get_bounds() const;
 
     private:
-        Console* parent;
+        Layer* parent;
+        Console* console;
+
+        std::vector< Layer* > sublayers;
 
         typedef std::vector< std::vector < Cell > > Buffer;
         Buffer frontbuffer, backbuffer;
 
         Rect bounds;
+        Point abs_origin;
         Width cell_w;
 
         Color default_fg, default_bg;
 
         bool contains(int x, int y) const;
+        void sublayer_to_front(Layer* layer);
+        void sublayer_to_back(Layer* layer);
 };
 
 #endif

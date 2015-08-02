@@ -11,6 +11,8 @@
 
 class Console 
 {
+    friend Layer;
+
     public:
     /*
      * Console creation.
@@ -48,6 +50,8 @@ class Console
         void clear();
         // Renders all Layers in the stack.
         void refresh();
+        // Renders the Console's backbuffer.
+        void update();
 
     /*
      * Console settings operations.
@@ -86,6 +90,8 @@ class Console
 
         void init_color_map(ColorMap& colormap);
         RGB get_color_rgb(Color color) const;
+        
+        void copy_layer_contents(Layer* layer); 
 };
 
 #endif

@@ -51,7 +51,7 @@ void Console::add_layer(Layer* layer)
 {
     if(layer) {
         layers.push_back(layer);
-        layer->parent = this;
+        layer->console= this;
     }
 } // add_layer()
 
@@ -61,7 +61,7 @@ void Console::remove_layer(Layer* layer)
         auto it = find(layers.begin(), layers.end(), layer);
         if(it != layers.end())
             layers.erase(it);
-        layer->parent = nullptr;
+        layer->console = nullptr;
     }
 } // remove_layer()
 
@@ -101,7 +101,7 @@ void Console::clear()
     }
 } // clear()
 
-void Console::refresh()
+void Console::copy_layer_contents(Layer* layer)
 {
     SDL_Rect src, dst;
     int full_width_w = full_width.get_glyph_size().w;
@@ -110,42 +110,51 @@ void Console::refresh()
     int half_width_h = half_width.get_glyph_size().h;
     src.h = dst.h = full_width_h;
 
-    for(auto it = layers.begin(); it != layers.end(); it++) {
-        Layer* layer = *it;
-        Rect bounds = layer->bounds;
-        Layer::Width width = layer->cell_width();
-        Fontmap* fontmap;
-        if(width == Layer::HalfWidth) {
-            src.w = dst.w = half_width_w;
-            fontmap = &half_width;
-        } else {
-            src.w = dst.w = full_width_w;
-            fontmap = &full_width;
-        }
-        SDL_Texture* font_tex = fontmap->get_font_texture();
-        for(int i = 0; i < bounds.h; i++) {
-            for(int j = 0; j < bounds.w; j++) {
-                Layer::Cell cell = layer->backbuffer[i][j];
-                Rect r = (*fontmap)[(unsigned char)cell.ch];
-                src = { .x = r.x, .y = r.y, .w = r.w, .h = r.h };
-                dst.x = bounds.x * half_width_w + src.w * j;
-                dst.y = bounds.y * half_width_h + src.h * i;
-                RGB fg = get_color_rgb(cell.fg);
-                RGB bg = get_color_rgb(cell.bg);
-                SDL_SetRenderDrawColor(ren, bg.r, bg.g, bg.b, 255);
-                SDL_RenderFillRect(ren, &dst);
-                SDL_SetTextureColorMod(font_tex, fg.r, fg.g, fg.b);
-                SDL_RenderCopy(ren, font_tex, &src, &dst);
-            }
-        }
-        layer->frontbuffer = layer->backbuffer;
+    Point origin = layer->abs_origin;
+    Rect bounds = layer->bounds;
+    Layer::Width width = layer->cell_width();
+    Fontmap* fontmap;
+    if(width == Layer::HalfWidth) {
+        src.w = dst.w = half_width_w;
+        fontmap = &half_width;
+    } else {
+        src.w = dst.w = full_width_w;
+        fontmap = &full_width;
     }
+    SDL_Texture* font_tex = fontmap->get_font_texture();
+    for(int i = 0; i < bounds.h; i++) {
+        for(int j = 0; j < bounds.w; j++) {
+            Layer::Cell cell = layer->backbuffer[i][j];
+            Rect r = (*fontmap)[(unsigned char)cell.ch];
+            src = { .x = r.x, .y = r.y, .w = r.w, .h = r.h };
+            dst.x = origin.x * half_width_w + src.w * j;
+            dst.y = origin.y * half_width_h + src.h * i;
+            RGB fg = get_color_rgb(cell.fg);
+            RGB bg = get_color_rgb(cell.bg);
+            SDL_SetRenderDrawColor(ren, bg.r, bg.g, bg.b, 255);
+            SDL_RenderFillRect(ren, &dst);
+            SDL_SetTextureColorMod(font_tex, fg.r, fg.g, fg.b);
+            SDL_RenderCopy(ren, font_tex, &src, &dst);
+        }
+    }
+    layer->frontbuffer = layer->backbuffer;
 
+} // copy_layer_contents()
+
+void Console::refresh()
+{
+    for(auto it = layers.begin(); it != layers.end(); it++) {
+        (*it)->touch();
+    }
+    update();
+} // refresh()
+
+void Console::update()
+{
     SDL_RenderPresent(ren);
     SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
     SDL_RenderClear(ren);
-
-} // refresh()
+} // update()
 
 void Console::set_custom_font(string fname, Layer::Width font_width, 
                               int num_horiz, int num_vert)
