@@ -80,6 +80,7 @@ void Layer::add_sublayer(Layer* layer)
         sublayers.push_back(layer);
         layer->console = console;
         layer->parent = this;
+        layer->set_origin(layer->bounds.x, layer->bounds.y);
     }
 } // add_sublayer()
 
