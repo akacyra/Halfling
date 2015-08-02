@@ -1,3 +1,5 @@
+<img src=Halfling.png width=96 height=120>
+
 # Halfling
 
 Halfling is a library that lets you build  text-based user interfaces using two fonts, a full-width font and a half-width font, on the same emulated terminal screen.
