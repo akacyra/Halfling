@@ -1,5 +1,7 @@
 #include <halfling/Console.h>
 
+using namespace halfling;
+
 void border(Layer& layer) 
 {
     Rect bounds = layer.get_bounds();

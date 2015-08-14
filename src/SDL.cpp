@@ -1,5 +1,6 @@
 #include "SDL.h"
 
+using namespace halfling;
 using std::string;
 
 InitError::InitError() : exception(), msg(SDL_GetError()) 

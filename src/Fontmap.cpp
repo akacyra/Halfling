@@ -1,6 +1,8 @@
 #include "Fontmap.h"
 #include <iostream>
 
+using namespace halfling;
+
 Fontmap::Fontmap() : font(nullptr), num_horiz(0), num_vert(0), 
     glyph_size{ 0, 0 }
 {

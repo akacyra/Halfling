@@ -5,25 +5,30 @@
 #include "Util.h"
 #include <string>
 
-class Fontmap
+namespace halfling
 {
-    public:
-        Fontmap();
-        Fontmap(SDL_Renderer* ren, std::string fname, int num_horiz, int num_vert);
-        ~Fontmap();
 
-        bool load(SDL_Renderer* ren, std::string fname, int num_horiz, int num_vert);
+    class Fontmap
+    {
+        public:
+            Fontmap();
+            Fontmap(SDL_Renderer* ren, std::string fname, int num_horiz, int num_vert);
+            ~Fontmap();
 
-        const Size& get_glyph_size() const;
-        SDL_Texture* get_font_texture();
-        bool is_valid() const;
-        Rect operator[](unsigned char ch) const;
+            bool load(SDL_Renderer* ren, std::string fname, int num_horiz, int num_vert);
 
-    private:
-        SDL_Texture* font;
+            const Size& get_glyph_size() const;
+            SDL_Texture* get_font_texture();
+            bool is_valid() const;
+            Rect operator[](unsigned char ch) const;
 
-        int num_horiz, num_vert;
-        Size glyph_size;
+        private:
+            SDL_Texture* font;
+
+            int num_horiz, num_vert;
+            Size glyph_size;
+    };
+
 };
 
 #endif 

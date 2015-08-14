@@ -1,6 +1,7 @@
 #include "Console.h"
 #include <algorithm>
 
+using namespace halfling;
 using std::vector;
 using std::string;
 

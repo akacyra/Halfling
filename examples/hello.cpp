@@ -1,5 +1,7 @@
 #include <halfling/Console.h>
 
+using namespace halfling;
+
 int main()
 {
     Console con("Hello", 0, 0, 80, 24);

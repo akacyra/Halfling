@@ -1,6 +1,7 @@
 #include "Layer.h"
 #include "Console.h"
 
+using namespace halfling;
 using std::vector;
 using std::string;
 using boost::optional;
@@ -182,6 +183,18 @@ void Layer::set_origin(int x, int y)
     }
 } // set_origin()
 
+void Layer::resize(int w, int h)
+{
+    Cell def = { .ch = ' ', .fg = COLOR_WHITE, .bg = COLOR_BLACK };
+    vector< vector < Cell > > temp(h, vector< Cell >(w, def));
+    int min_w = (w < bounds.w) ? w : bounds.w;
+    int min_h = (h < bounds.h) ? h : bounds.h;
+    for(int i = 0; i < min_h; i++)
+        for(int j = 0; j < min_w; j++)
+            temp[i][j] = backbuffer[i][j];
+    backbuffer = temp;
+} // resize()
+
 Rect Layer::get_bounds() const
 {
     return bounds;
@@ -189,5 +202,6 @@ Rect Layer::get_bounds() const
 
 bool Layer::contains(int x, int y) const
 {
+
     return (x >= 0 && x < bounds.w && y >= 0 && y < bounds.h);
 } // contains()

@@ -7,24 +7,29 @@
 #include <exception>
 #include <iostream>
 
-class InitError : public std::exception
+namespace halfling
 {
-    public:
-        InitError();
-        InitError(const std::string& msg);
-        virtual ~InitError() throw();
-        virtual const char* what() const throw();
-    private:
-        std::string msg;
-};
 
-class SDL
-{
-    public:
-        SDL(Uint32 flags = 0) throw(InitError);
-        virtual ~SDL();
-        void log_error(std::ostream& os, const std::string& msg);
-        static char wait_for_key();
+    class InitError : public std::exception
+    {
+        public:
+            InitError();
+            InitError(const std::string& msg);
+            virtual ~InitError() throw();
+            virtual const char* what() const throw();
+        private:
+            std::string msg;
+    };
+
+    class SDL
+    {
+        public:
+            SDL(Uint32 flags = 0) throw(InitError);
+            virtual ~SDL();
+            void log_error(std::ostream& os, const std::string& msg);
+            static char wait_for_key();
+    };
+
 };
 
 #endif 
