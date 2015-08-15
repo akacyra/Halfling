@@ -40,7 +40,7 @@ char SDL::wait_for_key()
 {
     while(true) {
         SDL_Event e;
-        SDL_PollEvent(&e);
+        SDL_WaitEvent(&e);
         if(e.type == SDL_KEYDOWN) {
             return e.key.keysym.sym;
         }
